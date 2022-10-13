@@ -1,5 +1,3 @@
-// TODO: Will improve the design later on to not have repititive codes. just gotta copy my fetched emails somewhere so i can work on them everywhere.
-
 document.addEventListener('DOMContentLoaded', function() {
   // Use buttons to toggle between views
   document.querySelector('#inbox').addEventListener('click', () => load_mailbox('inbox'));
@@ -43,18 +41,32 @@ function load_mailbox(mailbox) {
     
     for(let i = 0; i < emails.length; i++){
       const element = document.createElement('div');
-      element.innerHTML = `<span style="display: flex; justify-content: space-between"><strong> ${emails[i].sender} </strong> ${emails[i].subject} <span style="color: grey;">${emails[i].timestamp}</span></span>`;
 
-      document.querySelector('#details').append(elem);
+      if(emails[i].read === false){
+        element.innerHTML = `<strong><div style='gap: 6px; display: flex; justify-content: space-between; '> 
+                              <span>${emails[i].sender}</span>
+                              <span style='width: 65%;'>${emails[i].subject} </span>
+                              <span style="width: fit-content">${emails[i].timestamp}</span>
+                            </div></strong>`;
+      }
+      else{
+        element.innerHTML = `<div style='gap: 6px; display: flex; justify-content: space-between;'> 
+                            <span>${emails[i].sender}</span>
+                            <span style='width: 65%'>${emails[i].subject} </span>
+                            <span style="width: fit-content">${emails[i].timestamp}</span>
+                          </div>`;
+      }
+
+      // document.querySelector('#details').append(elem);
 
       let current_id = emails[i].id;
+
       element.addEventListener('click', () => show_details(mailbox, current_id));
 
       console.log("clicked!");
 
       element.style.cssText = "border: 2px solid black; padding: 5px; margin: 4px";
       document.querySelector('#emails-view').append(element);
-      
     }
     console.log(emails.length)
   });
@@ -67,8 +79,6 @@ document.addEventListener('DOMContentLoaded', function() {
       let recipients = document.querySelector('#compose-recipients').value;
       let subject = document.querySelector('#compose-subject').value;
       let body = document.querySelector('#compose-body').value;
-
-      // TODO: Gotta have new lines in my text area. same thing to do in reply.
 
       fetch('/emails', {
         method: 'POST',
@@ -141,7 +151,6 @@ function show_details(mailbox, id){
     document.querySelector('#emails-view').style.display = 'none';
     document.querySelector('#details').style.display = 'block';
       
-    // TODO: archived and unarchived emails don't load up if i don't click a button. might wanna fix this.
     if(mailbox === 'inbox'){
       elem.innerHTML = "";
       elem.innerHTML = `<div style="padding: 0px; margin: 0px; font-size: 1.2rem;"><p><strong>From: </strong>${email.sender}</p>
@@ -149,7 +158,28 @@ function show_details(mailbox, id){
         <p><strong>Timestamp: </strong>${email.timestamp}</p><button class="btn btn-sm btn-outline-primary" id="reply">Reply</button>
         <hr style="border-top: 2px solid black"><p>${email.body}</p><hr style="border-top: 2px solid black">
         <button class="btn btn-sm btn-outline-primary" id="archive">Archive</button></div>`;
+    }
 
+    else if(mailbox === 'archive'){
+      elem.innerHTML = "";
+      elem.innerHTML = `<div style="padding: 0px; margin: 0px; font-size: 1.2rem;"><p><strong>From: </strong>${email.sender}</p>
+        <p><strong>To: </strong>${email.recipients}</p><p><strong>Subject: </strong>${email.subject}</p>
+        <p><strong>Timestamp: </strong>${email.timestamp}</p><button class="btn btn-sm btn-outline-primary" id="reply">Reply</button>
+        <hr style="border-top: 2px solid black"><p>${email.body}</p><hr style="border-top: 2px solid black">
+        <button class="btn btn-sm btn-outline-primary" id="unarchive">Unarchive</button></div>`;
+    }
+
+    else{
+      elem.innerHTML = "";
+      elem.innerHTML = `<div style="padding: 0px; margin: 0px; font-size: 1.2rem;"><p><strong>From: </strong>${email.sender}</p>
+        <p><strong>To: </strong>${email.recipients}</p><p><strong>Subject: </strong>${email.subject}</p>
+        <p><strong>Timestamp: </strong>${email.timestamp}</p><button class="btn btn-sm btn-outline-primary" id="reply">Reply</button>
+        <hr style="border-top: 2px solid black"><p>${email.body}</p></div>`;
+    }
+    document.querySelector('#details').append(elem);
+    document.querySelector('#reply').addEventListener('click', () => reply(id));
+
+    if(mailbox === 'inbox'){
       document.querySelector('#archive').addEventListener('click', function(){
         fetch(`emails/${id}`,{
           method: 'PUT',
@@ -165,35 +195,18 @@ function show_details(mailbox, id){
     }
 
     else if(mailbox === 'archive'){
-      elem.innerHTML = "";
-      elem.innerHTML = `<div style="padding: 0px; margin: 0px; font-size: 1.2rem;"><p><strong>From: </strong>${email.sender}</p>
-        <p><strong>To: </strong>${email.recipients}</p><p><strong>Subject: </strong>${email.subject}</p>
-        <p><strong>Timestamp: </strong>${email.timestamp}</p><button class="btn btn-sm btn-outline-primary" id="reply">Reply</button>
-        <hr style="border-top: 2px solid black"><p>${email.body}</p><hr style="border-top: 2px solid black">
-        <button class="btn btn-sm btn-outline-primary" id="unarchive">Unarchive</button></div>`;
-
-        document.querySelector('#unarchive').addEventListener('click', function(){
-          fetch(`emails/${id}`,{
-            method: 'PUT',
-            body: JSON.stringify({
-              archived: false
-            })
-          })
-          .then( function() {
-            load_mailbox('inbox');
+      document.querySelector('#unarchive').addEventListener('click', function(){
+        fetch(`emails/${id}`,{
+          method: 'PUT',/*  */
+          body: JSON.stringify({
+            archived: false
           })
         })
+        .then( function() {
+          load_mailbox('inbox');
+        })
+      })
     }
-    else{
-      elem.innerHTML = "";
-      elem.innerHTML = `<div style="padding: 0px; margin: 0px; font-size: 1.2rem;"><p><strong>From: </strong>${email.sender}</p>
-        <p><strong>To: </strong>${email.recipients}</p><p><strong>Subject: </strong>${email.subject}</p>
-        <p><strong>Timestamp: </strong>${email.timestamp}</p><button class="btn btn-sm btn-outline-primary" id="reply">Reply</button>
-        <hr style="border-top: 2px solid black"><p>${email.body}</p></div>`;
-    }
-
-    document.querySelector('#reply').addEventListener('click', () => reply(id));
-
   })
 
   fetch(`emails/${id}`,{
