@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function reply(id){
-
+  document.querySelector('#compose-body').value = '';
   fetch(`/emails/${id}`)
   .then(response => response.json())
   .then(email => {
@@ -115,6 +115,7 @@ function reply(id){
     existing_subject = email.subject;
 
     document.querySelector('#compose-subject').value = `Replying to ${email.sender}'s email sent on ${email.timestamp}`;
+    document.querySelector('#compose-body').value = '';
 
     // Sending the email
     document.querySelector('#compose-form').onsubmit = () => {
